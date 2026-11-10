@@ -24,10 +24,12 @@ Interne Web-App für persönliche Todos; der Architekturentwurf steht noch aus.
 | 12 | Todo-Regeln | Älteste zuerst; mindestens vier Zeichen nach Entfernen äußerer Leerzeichen; Wiederöffnen möglich; endgültiges Löschen nach Bestätigung. |
 | 13 | Budget und Zeit | Keine zusätzlichen laufenden Kosten, kein fester Termin. |
 | 14 | Umfang | Zusammenfassung des Umfangs vom Auftraggeber bestätigt. |
+| 15 | Backup-Ausnahme | Nur im Testbetrieb tägliche Sicherung im lokalen Volume; Risiko des vollständigen Datenverlusts bei Serververlust akzeptiert. Externe Kopie vor dem Livegang erforderlich; derzeit kein externer Speicher vorhanden. |
 
 ### Annahmen (noch zu klären)
 - Tatsächlicher Serverstandort, verfügbare Serverressourcen und Erreichbarkeit sind noch nicht belegt.
 - Ein Backup im lokalen Volume schützt nicht gegen den Verlust des Servers.
+- Externer Speicher und dessen Kosten sind vor dem Livegang zu klären; ohne externe Kopie kein Livegang nach Betriebsstandard.
 
 ## 3. Systemübersicht
 Ausstehend.
