@@ -2,8 +2,10 @@
 CREATE TABLE public.todos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- Trim Unicode White_Space (U+0009..000D, 0020, 0085, 00A0, 1680,
+  -- 2000..200A, 2028, 2029, 202F, 205F, 3000); interior characters count.
   text text NOT NULL CHECK (
-    char_length(regexp_replace(text, '^[[:space:]]+|[[:space:]]+$', '', 'g')) >= 4
+    char_length(btrim(text, U&'\0009\000A\000B\000C\000D\0020\0085\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000')) >= 4
     AND char_length(text) <= 1000
   ),
   completed boolean NOT NULL DEFAULT false,

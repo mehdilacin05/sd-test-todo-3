@@ -2,7 +2,7 @@ SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 .PHONY: check secrets format lint lint-dateien typecheck test audit image health-test testdb
 
-check: secrets format lint typecheck test audit
+check: secrets format lint typecheck test testdb audit
 secrets:
 	gitleaks git --redact --no-banner .
 	gitleaks dir --redact --no-banner .

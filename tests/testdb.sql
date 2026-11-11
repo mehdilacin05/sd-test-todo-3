@@ -20,6 +20,18 @@ INSERT INTO public.todos (text) VALUES ('  äöüß  '), (repeat('x', 1000));
 DELETE FROM public.todos WHERE text <> 'A todo';
 SELECT pg_temp.must_fail($q$INSERT INTO public.todos (text) VALUES (E'\t abc \n')$q$, '23514');
 SELECT pg_temp.must_fail($q$INSERT INTO public.todos (text) VALUES ('   ')$q$, '23514');
+-- Unicode White_Space property: all edge characters must be trimmed, not counted.
+DO $$
+DECLARE cp integer; ws text;
+BEGIN
+  FOREACH cp IN ARRAY ARRAY[9,10,11,12,13,32,133,160,5760,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8232,8233,8239,8287,12288] LOOP
+    ws := chr(cp);
+    PERFORM pg_temp.must_fail(format('INSERT INTO public.todos (text) VALUES (%L)', ws || 'abc' || ws), '23514');
+    INSERT INTO public.todos (text) VALUES (ws || 'abcd' || ws);
+    INSERT INTO public.todos (text) VALUES ('ab' || ws || 'c');
+  END LOOP;
+END $$;
+DELETE FROM public.todos WHERE text <> 'A todo';
 SELECT pg_temp.must_fail($q$INSERT INTO public.todos (text, id) VALUES ('forged', gen_random_uuid())$q$, '42501');
 SELECT pg_temp.must_fail($q$INSERT INTO public.todos (text) VALUES ('  abc  ')$q$, '23514');
 SELECT pg_temp.must_fail($q$INSERT INTO public.todos (text) VALUES (repeat('x', 1001))$q$, '23514');
