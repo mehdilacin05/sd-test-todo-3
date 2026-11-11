@@ -54,10 +54,39 @@ const context = await browser.newContext({
 const page = await context.newPage();
 try {
   await page.goto(`${app}/login`);
+  const loginResponse = await page.request.get(`${app}/login`);
+  assert.equal(loginResponse.headers()["x-content-type-options"], "nosniff");
+  assert.equal(loginResponse.headers()["x-frame-options"], "DENY");
+  assert.equal(loginResponse.headers()["referrer-policy"], "same-origin");
+  assert.equal(loginResponse.headers()["x-powered-by"], undefined);
+  for (const path of [
+    "/",
+    "/forgotten-private-path",
+    "/login-private",
+    "/auth-private",
+    "/health-private",
+  ]) {
+    const result = await page.request.get(`${app}${path}`, { maxRedirects: 0 });
+    assert.equal(result.status(), 307, path);
+    assert.equal(new URL(result.headers().location).pathname, "/login", path);
+  }
   await page.getByLabel("E-Mail").fill("todo-a@example.invalid");
   await page.getByRole("button", { name: "Anmeldelink anfordern" }).click();
   await page.goto(await waitForLink());
   await page.waitForURL(`${app}/`);
+  const payload = '<img src=x onerror="window.__xss=1">';
+  await page.getByLabel("Neues Todo").fill(payload);
+  await page.getByRole("button", { name: "Anlegen" }).click();
+  await page.getByText(payload, { exact: true }).waitFor();
+  await page.reload();
+  await page.getByText(payload, { exact: true }).waitFor();
+  assert.equal(await page.locator(".todos img").count(), 0);
+  assert.equal(await page.evaluate(() => window.__xss), undefined);
+  await db.query("DELETE FROM public.todos WHERE user_id=$1 AND text=$2", [
+    a.id,
+    payload,
+  ]);
+  await page.reload();
   await page.getByLabel("Neues Todo").fill("abc");
   const invalid = await Promise.all([
     page.waitForResponse(
