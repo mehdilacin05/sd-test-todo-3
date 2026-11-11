@@ -1,0 +1,3 @@
+# CI-Vorschlag (noch nicht installiert)
+
+Der Mensch installiert und prüft die Workflow-Dateien. Für einen Pull Request laufen nach `npm ci` zuerst `make check`, danach auf einem ARM64-Runner `make image` und `make health-test`. Das Health-Ziel startet eine isolierte Testdatenbank und räumt sie wieder auf. Image-Scan mit Trivy auf HIGH/CRITICAL mit Fix vorsehen. Keine Veröffentlichung aus PRs. Für main, Staging und Promotion gelten die Vorgaben aus `docs/ARCHITEKTUR.md`; diese Pipeline ist hier noch nicht eingerichtet. Das lokale Gate benötigt Node 24, npm, gitleaks und für Image und Integration Docker mit Compose. Geheimnisse nur zur Laufzeit bereitstellen, nie als Build-Argument.

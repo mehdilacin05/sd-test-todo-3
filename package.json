@@ -1,0 +1,33 @@
+{
+  "name": "t_66576c00",
+  "version": "1.0.0",
+  "description": "Messlauf 3 software-projekt (Testprojekt, wird archiviert)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "next": "16.4.6",
+    "pg": "8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3"
+  }
+}
