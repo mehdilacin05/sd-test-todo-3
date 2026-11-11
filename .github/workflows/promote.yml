@@ -1,0 +1,62 @@
+# Ziel: .github/workflows/promote.yml. Nur Menschen starten ihn (der Agent hat kein actions:write).
+# Setzt das schon gebaute und geprüfte Image per Digest auf `prod`. Kein Neubau.
+# Rollback = denselben Workflow mit dem SHA des letzten guten Stands starten.
+name: promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Voller Commit-SHA (40 Zeichen) des Stands für prod. Rollback: alten SHA eingeben."
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: promote
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      packages: write
+      actions: read
+    env:
+      SHA: ${{ inputs.sha }} # Eingabe nur über env, nie direkt in run:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Eingabe prüfen
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Bitte den vollen 40-stelligen SHA eingeben"; exit 1; }
+      - name: ci für diesen Commit auf main grün?
+        run: |
+          c=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$SHA" --event push \
+                --json conclusion --jq '.[0].conclusion // empty')
+          [ "$c" = "success" ] || { echo "::error::ci für $SHA: ${c:-kein Lauf}"; exit 1; }
+      - name: Digest von sha-<commit> auf prod setzen
+        run: |
+          export REGISTRY_AUTH_FILE="$RUNNER_TEMP/auth.json"
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "$GH_TOKEN" | skopeo login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          OLD=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE:prod" 2>/dev/null || echo "keiner")
+          DIGEST=$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE:sha-$SHA")
+          skopeo copy --all --preserve-digests "docker://$IMAGE@$DIGEST" "docker://$IMAGE:prod"
+          {
+            echo "prod = sha-$SHA ($DIGEST)"
+            echo "vorher: $OLD"
+            echo "Zeit: $(date -u +%FT%TZ), ausgelöst von $GITHUB_ACTOR"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Smoke - prod meldet diesen Commit
+        if: vars.PROD_URL != ''
+        env:
+          URL: ${{ vars.PROD_URL }}
+        run: |
+          for _ in $(seq 60); do
+            curl -fsS "$URL/health" | grep -q "$SHA" && exit 0
+            sleep 10
+          done
+          echo "::error::prod meldet $SHA nach 10 min nicht. Rollback: promote mit altem SHA"; exit 1

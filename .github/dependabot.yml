@@ -1,0 +1,48 @@
+# Ziel: .github/dependabot.yml. Sicherheits-Updates in den Repo-Einstellungen einschalten:
+# sie kommen sofort, die Wartezeit (cooldown) gilt nur für normale Versions-Updates.
+# Dependabot-PRs laufen durch dieselben Checks und werden von einem Menschen gemergt, nie automatisch.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 7 # frisch veröffentlichte (evtl. kompromittierte) Versionen abwarten
+      semver-major-days: 14
+    groups:
+      npm-minor-patch: # ein PR für alles Kleine; Major-Updates kommen einzeln
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions # aktualisiert SHA-Pins samt Versionskommentar
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker # Basis-Images im Dockerfile
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 7
+    groups:
+      docker:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: node # Node-Major nur bewusst wechseln (LTS)
+        update-types: ["version-update:semver-major"]
