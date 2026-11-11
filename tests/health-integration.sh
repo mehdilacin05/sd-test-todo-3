@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+docker run --rm --entrypoint node todo-health-test:local -e '
+const fs = require("node:fs");
+for (const path of ["/usr/local/lib/node_modules/npm", "/usr/local/lib/node_modules/corepack", "/usr/local/bin/npm", "/usr/local/bin/npx", "/usr/local/bin/corepack"]) {
+  if (fs.existsSync(path)) { console.error(`Unexpected runtime package manager: ${path}`); process.exitCode = 1; }
+}
+'
 project="health-${USER:-test}-$$"
 compose=(docker compose -p "$project" -f tests/compose.health.yml)
 trap '"${compose[@]}" down --volumes --remove-orphans' EXIT
