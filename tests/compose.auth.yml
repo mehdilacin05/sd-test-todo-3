@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_PASSWORD: test-only-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  mail:
+    image: axllent/mailpit:v1.27.4
+  runner:
+    image: node:24-bookworm
+    working_dir: /work
+    command: ["sleep", "infinity"]
+  auth:
+    image: supabase/gotrue:v2.186.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://auth:9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:test-only-password@db:5432/postgres?search_path=auth
+      GOTRUE_SITE_URL: http://runner:3000
+      GOTRUE_URI_ALLOW_LIST: http://runner:3000/auth/callback
+      GOTRUE_JWT_SECRET: test-only-jwt-secret-at-least-32-characters-long
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_SMTP_HOST: mail
+      GOTRUE_SMTP_PORT: 1025
+      GOTRUE_SMTP_ADMIN_EMAIL: test@example.invalid
+      GOTRUE_SMTP_SENDER_NAME: Test
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: 1000

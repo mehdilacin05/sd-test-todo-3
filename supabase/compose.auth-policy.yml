@@ -1,0 +1,7 @@
+# Apply together with the self-hosted Supabase Compose file; never alone.
+services:
+  auth:
+    environment:
+      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_OTP_EXP: "1800"

@@ -7,7 +7,7 @@ secrets:
 	gitleaks git --redact --no-banner .
 	gitleaks dir --redact --no-banner .
 format:
-	npx --no-install prettier --check app lib tests package.json tsconfig.json next.config.ts eslint.config.mjs
+	npx --no-install prettier --check app lib tests proxy.ts package.json tsconfig.json next.config.ts eslint.config.mjs
 lint:
 	npx --no-install eslint . --max-warnings 0
 typecheck:
@@ -24,3 +24,6 @@ health-test: image
 	bash tests/health-integration.sh
 testdb:
 	bash tests/testdb.sh
+
+auth-test:
+	bash tests/auth-integration.sh
