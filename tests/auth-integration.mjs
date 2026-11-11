@@ -71,6 +71,17 @@ async function clearMail() {
 const protectedPage = await request(`${app}/`);
 assert.equal(protectedPage.status, 307);
 assert.match(protectedPage.headers.get("location"), /\/login/);
+for (const [contentType, body] of [
+  ["application/json", "{}"],
+  ["multipart/form-data", "broken"],
+]) {
+  const invalid = await request(`${app}/auth/request`, {
+    method: "POST",
+    headers: { "Content-Type": contentType },
+    body,
+  });
+  assert.ok(invalid.status >= 400 && invalid.status < 500, contentType);
+}
 const created = await fetch(`${auth}/admin/users`, {
   method: "POST",
   headers: adminHeaders,
@@ -81,7 +92,18 @@ const original = await (
   await fetch(`${auth}/admin/users`, { headers: adminHeaders })
 ).json();
 const unknown = "unknown@example.invalid";
-await submit(unknown);
+const unknownResponse = await submit(unknown);
+const malformedResponse = await submit("invalid@@example.invalid");
+assert.equal(unknownResponse.status, 303);
+assert.equal(malformedResponse.status, unknownResponse.status);
+assert.equal(
+  malformedResponse.headers.get("location"),
+  unknownResponse.headers.get("location"),
+);
+assert.equal(
+  (await (await fetch(`${mail}/api/v1/messages`)).json()).messages?.length || 0,
+  0,
+);
 const direct = await fetch(`${auth}/otp`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -100,6 +122,7 @@ const after = await (
 assert.equal(after.users.length, original.users.length);
 await clearMail();
 await submit(email);
+const verifierCookies = new Map(cookies);
 const first = await link();
 let response = await follow(await request(first));
 assert.equal(response.status, 200, await response.clone().text());
@@ -107,9 +130,25 @@ assert.match(response.url, /\/$/);
 assert.equal((await request(`${app}/`)).status, 200);
 await follow(await request(`${app}/auth/logout`, { method: "POST" }));
 assert.equal((await request(`${app}/`)).status, 307);
-cookies = new Map();
+cookies = new Map(verifierCookies);
 response = await follow(await request(first));
 assert.notEqual(response.url, `${app}/`, "magic link is single-use");
+assert.equal((await request(`${app}/`)).status, 307);
+await clearMail();
+const freshEmail = "fresh@example.invalid";
+const freshUser = await fetch(`${auth}/admin/users`, {
+  method: "POST",
+  headers: adminHeaders,
+  body: JSON.stringify({ email: freshEmail, email_confirm: true }),
+});
+assert.equal(freshUser.status, 200);
+await submit(freshEmail);
+const fresh = await link();
+response = await follow(await request(fresh));
+assert.equal(response.status, 200, "fresh link works after replay rejection");
+assert.equal((await request(`${app}/`)).status, 200);
+await follow(await request(`${app}/auth/logout`, { method: "POST" }));
+assert.equal((await request(`${app}/`)).status, 307);
 await clearMail();
 const expiryEmail = "expiry@example.invalid";
 const expiryUser = await fetch(`${auth}/admin/users`, {
