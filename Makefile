@@ -1,6 +1,6 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
-.PHONY: check secrets format lint lint-dateien typecheck test audit image health-test
+.PHONY: check secrets format lint lint-dateien typecheck test audit image health-test testdb
 
 check: secrets format lint typecheck test audit
 secrets:
@@ -22,3 +22,5 @@ image:
 	docker build --platform linux/arm64 --build-arg GIT_SHA=$$(git rev-parse HEAD) -t todo-health-test:local .
 health-test: image
 	bash tests/health-integration.sh
+testdb:
+	bash tests/testdb.sh
