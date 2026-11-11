@@ -30,3 +30,6 @@ auth-test:
 
 todo-test:
 	bash tests/todo-integration.sh
+
+ops-test:
+	bash tests/ops-integration.sh
