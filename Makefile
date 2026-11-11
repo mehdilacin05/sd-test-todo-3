@@ -35,3 +35,8 @@ todo-test:
 ops-test: image
 	bash tests/ops-integration.sh
 	bash tests/ops-stack.sh
+
+.PHONY: security
+security: secrets testdb todo-test
+	node tests/security-ports.mjs
+	node tests/security-build.mjs
