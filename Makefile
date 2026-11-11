@@ -27,3 +27,6 @@ testdb:
 
 auth-test:
 	bash tests/auth-integration.sh
+
+todo-test:
+	bash tests/todo-integration.sh

@@ -1,0 +1,66 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    1rem/1.5 system-ui,
+    sans-serif;
+  color: #17212b;
+  background: #f5f7fa;
+}
+main {
+  max-width: 44rem;
+  margin: auto;
+  padding: 1rem;
+}
+header,
+.actions,
+nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+header {
+  justify-content: space-between;
+}
+.create {
+  display: grid;
+  gap: 0.5rem;
+}
+textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+}
+button,
+a {
+  font: inherit;
+}
+button {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.todos {
+  list-style: none;
+  padding: 0;
+}
+.todos li {
+  background: white;
+  border: 1px solid #ccd5df;
+  border-radius: 0.4rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.actions {
+  margin-top: 0.5rem;
+}
+.completed {
+  text-decoration: line-through;
+}
+nav {
+  justify-content: space-between;
+}

@@ -26,6 +26,9 @@ export async function proxy(request: NextRequest) {
   );
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
+    if (request.nextUrl.pathname === "/todos") {
+      return new NextResponse("Bitte anmelden.", { status: 401 });
+    }
     const redirect = NextResponse.redirect(
       new URL("/login", process.env.NEXT_PUBLIC_SITE_URL!),
     );

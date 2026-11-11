@@ -2,17 +2,19 @@ import http from "node:http";
 
 http
   .createServer((request, response) => {
-    if (!request.url.startsWith("/auth/v1/")) {
+    const auth = request.url.startsWith("/auth/v1/");
+    const rest = request.url.startsWith("/rest/v1/");
+    if (!auth && !rest) {
       response.writeHead(404).end();
       return;
     }
     const upstream = http.request(
       {
-        hostname: "auth",
-        port: 9999,
-        path: request.url.slice("/auth/v1".length),
+        hostname: auth ? "auth" : "rest",
+        port: auth ? 9999 : 3000,
+        path: request.url.slice(auth ? "/auth/v1".length : "/rest/v1".length),
         method: request.method,
-        headers: { ...request.headers, host: "auth:9999" },
+        headers: { ...request.headers, host: auth ? "auth:9999" : "rest:3000" },
       },
       (incoming) => {
         response.writeHead(incoming.statusCode, incoming.headers);
