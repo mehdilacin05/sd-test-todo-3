@@ -70,6 +70,27 @@ try {
     assert.equal(result.status(), 307, path);
     assert.equal(new URL(result.headers().location).pathname, "/login", path);
   }
+  for (const path of [
+    "/v1",
+    "/beta",
+    "/test",
+    "/admin",
+    "/swagger",
+    "/openapi.json",
+    "/metrics",
+    "/.env",
+    "/.git/config",
+  ]) {
+    const result = await page.request.get(`${app}${path}`, { maxRedirects: 0 });
+    const status = result.status();
+    if (status >= 300 && status < 400) {
+      const location = new URL(result.headers().location, app);
+      assert.equal(location.origin, app, path);
+      assert.equal(location.pathname, "/login", path);
+    } else {
+      assert.ok([401, 403, 404, 405].includes(status), `${path}: ${status}`);
+    }
+  }
   await page.getByLabel("E-Mail").fill("todo-a@example.invalid");
   await page.getByRole("button", { name: "Anmeldelink anfordern" }).click();
   await page.goto(await waitForLink());

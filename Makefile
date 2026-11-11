@@ -39,3 +39,4 @@ ops-test: image
 .PHONY: security
 security: secrets testdb todo-test
 	node tests/security-ports.mjs
+	node tests/security-build.mjs
