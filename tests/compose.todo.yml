@@ -1,0 +1,11 @@
+services:
+  rest:
+    image: postgrest/postgrest:v12.2.12
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:test-only-password@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: test-only-jwt-secret-at-least-32-characters-long
