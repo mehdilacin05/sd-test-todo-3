@@ -26,3 +26,12 @@ Playwright-Chromium-Browser. Der Lauf benötigt Docker Compose und Internetzugan
 für Paket- und Browserinstallation. Er prüft Anmeldung, mobilen Todo-Ablauf,
 Löschbestätigung, Seitenwechsel sowie den Zugriff auf eine fremde ID. Die
 Container und Daten werden nach dem Lauf auch bei Fehlern entfernt.
+
+## Betriebsprüfung
+
+`make ops-test` baut das ARM64-App-Image und startet zwei temporäre Compose-Projekte.
+Es prüft Anmeldung mit Mailpit, Todo, abgeschirmte Admin-Routen, getrennte
+Datenbanken, `/health`, verschlüsselte Sicherung und Rücksicherung. Docker Compose,
+GnuPG und bei fehlenden Images Internetzugang sind nötig. Die Wegwerfressourcen
+werden entfernt. Einrichtung, Sicherungs-Timer und Live-Voraussetzungen stehen
+in [docs/BETRIEB.md](docs/BETRIEB.md); ein Test ist keine Live-Freigabe.

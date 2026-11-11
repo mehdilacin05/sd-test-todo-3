@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 export async function authClient() {
   const store = await cookies();
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookieOptions: {
         httpOnly: true,
@@ -29,7 +29,8 @@ export async function authClient() {
 }
 
 export function siteUrl() {
-  return new URL(process.env.NEXT_PUBLIC_SITE_URL!).origin;
+  return new URL(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL!)
+    .origin;
 }
 
 export function validOrigin(request: Request) {

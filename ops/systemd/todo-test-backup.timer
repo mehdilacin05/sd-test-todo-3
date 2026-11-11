@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Todo test database backup (Asia/Tokyo)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 Asia/Tokyo
+Persistent=true
+Unit=todo-test-backup.service
+
+[Install]
+WantedBy=timers.target
