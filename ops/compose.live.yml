@@ -1,0 +1,8 @@
+name: todo-live
+services:
+  auth:
+    environment:
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:?live SMTP required}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:?live SMTP required}
+      GOTRUE_SMTP_USER: ${SMTP_USER:?live SMTP required}
+      GOTRUE_SMTP_PASS: ${SMTP_PASSWORD:?live SMTP required}

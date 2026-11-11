@@ -15,10 +15,11 @@ Tokens überprüft und entsprechend gefiltert werden.
 
 ## Auth-Vorgaben (verbindlich für Test und Live)
 
-Beim späteren Einrichten des Supabase-Stacks die versionierte Datei
-`supabase/compose.auth-policy.yml` **als letzte** Compose-Datei einbinden, z. B.
-`docker compose -f <supabase-compose.yml> -f supabase/compose.auth-policy.yml config`.
-Sie deaktiviert Registrierung serverseitig und begrenzt Mail-Links auf 1800
+Im Betriebsstack `ops/compose.yml` sind dieselben Werte direkt gesetzt; Details
+und Aufrufe stehen in `BETRIEB.md`. Andere Supabase-Stacks müssen die versionierte
+Datei `supabase/compose.auth-policy.yml` **als letzte** Compose-Datei einbinden,
+z. B. `docker compose -f <supabase-compose.yml> -f supabase/compose.auth-policy.yml config`.
+Die Policy deaktiviert Registrierung serverseitig und begrenzt Mail-Links auf 1800
 Sekunden. Auch die App fordert Links mit `shouldCreateUser=false` an. Es dürfen
 keine weiteren Auth-Provider oder anonyme Anmeldung aktiviert sein. Nur ein
 Administrator darf Konten anlegen. Vor Inbetriebnahme mit dem tatsächlichen
@@ -35,8 +36,8 @@ gibt keine öffentliche Studio-Route. Der Betreiber verbindet sich mit SSH und
 Schlüssel zum Server und nutzt eine lokale Portweiterleitung zu einem nur auf
 Server-Loopback gebundenen oder anderweitig privat erreichbaren Studio-Port,
 z. B. `ssh -L 127.0.0.1:54323:127.0.0.1:54323 <operator>@<server>`.
-Die tatsächlichen Ports und das geschützte Binding sind bei Schritt 5 zu
-konfigurieren und vor Verwendung zu prüfen; ein privater Container-Port ist
+Der Betriebsstack bindet Studio nur auf Server-Loopback; die Ports stehen in
+`BETRIEB.md` und sind vor Verwendung zu prüfen. Ein privater Container-Port ist
 nicht automatisch vom Server-Loopback erreichbar. Kein `0.0.0.0`-Binding, keine
 öffentliche Freigabe von Studio oder DB. Betriebssystem- und Studio-Zugang nur
 für berechtigte Betreiber; Schlüssel und Server-Zugangsdaten nicht ins Repo.
@@ -48,5 +49,5 @@ Datenbank-Fremdschlüssel. Zugänge entziehen und Tunnel schließen nach Gebrauc
 
 Mailpit ist ausschließlich für isolierte Testdaten und darf nicht öffentlich
 zugänglich sein. Für Live sind SMTP, sichere Zustellung und die weiteren Punkte
-in `FREIGABE.md` vorab nachzuweisen. Diese Datei richtet keinen Stack ein und
-ist keine Live- oder Promote-Freigabe.
+in `FREIGABE.md` vorab nachzuweisen. Die Anleitung in `BETRIEB.md` ist keine
+Live- oder Promote-Freigabe.

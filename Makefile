@@ -19,7 +19,8 @@ audit:
 lint-dateien:
 	@files="$(filter %.ts %.tsx %.js %.jsx %.mjs,$(DATEIEN))"; if [ -n "$$files" ]; then npx --no-install eslint --max-warnings 0 $$files; fi
 image:
-	docker build --platform linux/arm64 --build-arg GIT_SHA=$$(git rev-parse HEAD) -t todo-health-test:local .
+	@mkdir -p .docker-config
+	DOCKER_CONFIG=$${DOCKER_CONFIG:-$(CURDIR)/.docker-config} docker build --platform linux/arm64 --build-arg GIT_SHA=$$(git rev-parse HEAD) -t todo-health-test:local .
 health-test: image
 	bash tests/health-integration.sh
 testdb:
@@ -30,3 +31,7 @@ auth-test:
 
 todo-test:
 	bash tests/todo-integration.sh
+
+ops-test: image
+	bash tests/ops-integration.sh
+	bash tests/ops-stack.sh

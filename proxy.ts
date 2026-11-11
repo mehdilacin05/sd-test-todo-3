@@ -4,8 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookieOptions: {
         httpOnly: true,
@@ -30,7 +30,10 @@ export async function proxy(request: NextRequest) {
       return new NextResponse("Bitte anmelden.", { status: 401 });
     }
     const redirect = NextResponse.redirect(
-      new URL("/login", process.env.NEXT_PUBLIC_SITE_URL!),
+      new URL(
+        "/login",
+        process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL!,
+      ),
     );
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     return redirect;

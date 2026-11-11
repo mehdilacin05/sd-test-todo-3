@@ -1,0 +1,11 @@
+[Unit]
+Description=Encrypted daily Todo test database backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/todo-app
+EnvironmentFile=/etc/todo-test/backup.env
+UMask=0077
+ExecStart=/bin/bash /opt/todo-app/ops/backup.sh

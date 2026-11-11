@@ -1,0 +1,149 @@
+services:
+  db:
+    build:
+      context: ..
+      dockerfile: ops/database/Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?required}
+      REST_DB_PASSWORD: ${REST_DB_PASSWORD:?required}
+      HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD:?required}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  auth:
+    image: supabase/gotrue:v2.186.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${SITE_URL:?required}/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://auth_admin:${AUTH_DB_PASSWORD:?required}@db:5432/postgres?search_path=auth
+      GOTRUE_SITE_URL: ${SITE_URL:?required}
+      GOTRUE_URI_ALLOW_LIST: ${SITE_URL:?required}/auth/callback
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:?required}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_OTP_EXP: "1800"
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:?required}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:?required}
+      GOTRUE_SMTP_USER: ${SMTP_USER:-}
+      GOTRUE_SMTP_PASS: ${SMTP_PASSWORD:-}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_FROM:?required}
+      GOTRUE_SMTP_SENDER_NAME: Todo
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9999/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  migrate:
+    build:
+      context: ..
+      dockerfile: ops/database/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    depends_on:
+      auth:
+        condition: service_healthy
+    entrypoint: ["bash", "/opt/migrate.sh"]
+  rest:
+    image: postgrest/postgrest:v12.2.12
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${REST_DB_PASSWORD:?required}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:?required}
+  app:
+    image: ${APP_IMAGE:?required}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://todo_health:${HEALTH_DB_PASSWORD:?required}@db:5432/postgres
+      SUPABASE_URL: http://gateway:3001
+      SUPABASE_ANON_KEY: ${ANON_KEY:?required}
+      SITE_URL: ${SITE_URL:?required}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  gateway:
+    build:
+      context: ..
+      dockerfile: ops/gateway.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:?required}:3001"
+  gateway-private:
+    build:
+      context: ..
+      dockerfile: ops/gateway.Dockerfile
+    restart: unless-stopped
+    environment:
+      PRIVATE_GATEWAY: "true"
+  meta:
+    image: supabase/postgres-meta:v0.100.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      CRYPTO_KEY: ${META_CRYPTO_KEY:?required}
+  studio:
+    image: supabase/studio:2026.11.02-sha-a05e7ec
+    restart: unless-stopped
+    environment:
+      HOSTNAME: 0.0.0.0
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      PG_META_CRYPTO_KEY: ${META_CRYPTO_KEY:?required}
+      PGRST_DB_SCHEMAS: public
+      DEFAULT_ORGANIZATION_NAME: Todo
+      DEFAULT_PROJECT_NAME: Todo
+      SUPABASE_URL: http://gateway-private:3001
+      SUPABASE_PUBLIC_URL: ${SITE_URL:?required}
+      SUPABASE_ANON_KEY: ${ANON_KEY:?required}
+      SUPABASE_SERVICE_KEY: ${SERVICE_KEY:?required}
+      AUTH_JWT_SECRET: ${JWT_SECRET:?required}
+      ENABLED_FEATURES_LOGS_ALL: "false"
+    ports:
+      - "127.0.0.1:${STUDIO_PORT:?required}:3000"
+volumes:
+  database:
